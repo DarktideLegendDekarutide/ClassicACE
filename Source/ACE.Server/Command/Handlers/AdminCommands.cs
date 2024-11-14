@@ -5145,7 +5145,7 @@ namespace ACE.Server.Command.Handlers
 
             if (wo is Creature creature)
             {
-                creature.NavToPosition(player.Location);
+                creature.NavToObject(player);
             }
         }
     }

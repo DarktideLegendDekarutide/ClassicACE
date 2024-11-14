@@ -33,7 +33,7 @@ namespace ACE.Server.WorldObjects
 
         private double NextPathfindingMoveTime = 0;
         private double LastPathfindingMoveTime = 0;
-        private readonly double PathFindingMoveTime = 1;
+        private readonly double PathfindingMoveTime = 1;
 
         public void RunToPosition(Position position)
         {
@@ -49,12 +49,31 @@ namespace ACE.Server.WorldObjects
             _pathFindingType = PathfindingType.NavToPosition;
         }
 
-        private void BeginPathFind(double currentUnixTime)
+        internal void NavToObject(WorldObject wo)
         {
-            if (PathfindingTargetPosition == null)
+            PathfindingTargetObject = wo;
+            IsMovingWithPathfinding = true;
+            _pathFindingType = PathfindingType.NavToObject;
+        }
+
+        private void BeginPathfind(double currentUnixTime)
+        {
+            if (_pathFindingType == PathfindingType.NavToPosition && PathfindingTargetPosition == null)
                 return;
 
-            NextPathfindingMoveTime = currentUnixTime + PathFindingMoveTime;
+            if (_pathFindingType == PathfindingType.NavToObject && PathfindingTargetObject == null)
+                return;
+
+            NextPathfindingMoveTime = currentUnixTime + PathfindingMoveTime;
+
+            var targetPosition = PathfindingTargetObject?.PhysicsObj.Position.ACEPosition() ?? PathfindingTargetPosition;
+
+            if (targetPosition.LandblockId != Location.LandblockId)
+            {
+                log.Info("Objects can only follow other objects within the same landblock");
+                FinishPathfinding();
+                return;
+            }
 
             var isStuck = (currentUnixTime - LastPathfindingMoveTime) > 5.0;
 
@@ -63,17 +82,17 @@ namespace ACE.Server.WorldObjects
                 return;
             }
 
-            var distance = PhysicsObj.Position.ACEPosition().DistanceTo(PathfindingTargetPosition);
+            var distance = PhysicsObj.Position.ACEPosition().DistanceTo(targetPosition);
             log.Info($"Distance: {distance}");
 
             if (distance < 2)
             {
                 log.Info("Distance has been reached");
-                FinishPathFinding();
+                FinishPathfinding();
                 return;
             }
 
-            var path = PathfinderManager.FindRoute(PhysicsObj.Position.ACEPosition(), PathfindingTargetObject?.PhysicsObj.Position.ACEPosition() ?? PathfindingTargetPosition);
+            var path = PathfinderManager.FindRoute(PhysicsObj.Position.ACEPosition(), targetPosition);
 
             if (path is null)
             {
@@ -134,14 +153,14 @@ namespace ACE.Server.WorldObjects
             }
         }
 
-        public void FinishPathFinding()
+        public void FinishPathfinding()
         {
             PathfindingTargetPosition = null;
             PathfindingTargetObject = null;
             IsMovingWithPathfinding = false;
         }
 
-        public void PathFinding_Tick(double currentUnixTime)
+        public void Pathfinding_Tick(double currentUnixTime)
         {
             NextMonsterTickTime = currentUnixTime + monsterTickInterval;
 
@@ -155,7 +174,7 @@ namespace ACE.Server.WorldObjects
 
             if (NextPathfindingMoveTime < currentUnixTime)
             {
-                BeginPathFind(currentUnixTime);
+                BeginPathfind(currentUnixTime);
             }
         }
 

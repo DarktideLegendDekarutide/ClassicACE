@@ -41,7 +41,7 @@ namespace ACE.Server.WorldObjects
 
             if (IsMovingWithPathfinding)
             {
-                PathFinding_Tick(currentUnixTime);
+                Pathfinding_Tick(currentUnixTime);
                 return;
             }
 
