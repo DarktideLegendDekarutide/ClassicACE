@@ -4,6 +4,7 @@ using ACE.Entity.Enum;
 using ACE.Server.Entity;
 using ACE.Server.Entity.Actions;
 using ACE.Server.Managers;
+using ACE.Server.Physics.Animation;
 using ACE.Server.Physics.Extensions;
 using System;
 using System.Collections.Generic;
@@ -38,8 +39,19 @@ namespace ACE.Server.WorldObjects
         public void RunToPosition(Position position)
         {
             var moveToPosition = new Motion(this, position);
+            moveToPosition.MoveToParameters.MovementParameters = MovementParams.CanCharge;
             moveToPosition.RunRate = GetRunRate();
             EnqueueBroadcastMotion(moveToPosition);
+
+            // perform movement on server
+            var mvp = new MovementParameters(); 
+            mvp.DistanceToObject = moveToPosition.MoveToParameters.DistanceToObject; 
+            //mvp.UseFinalHeading = true;
+
+            PhysicsObj.MoveToPosition(new Physics.Common.Position(position), mvp);
+
+            // prevent snap forward
+            PhysicsObj.UpdateTime = Physics.Common.PhysicsTimer.CurrentTime;
         }
 
         internal void NavToPosition(Position position)
@@ -119,7 +131,6 @@ namespace ACE.Server.WorldObjects
                     log.Info("Stuck in position, resetting");
                     log.Info($"CurrentLocation: {PhysicsObj.Position.ACEPosition().ToLOCString()}");
 
-                    CancelMoveTo();
                     IsMoving = true;
 
 
@@ -141,14 +152,14 @@ namespace ACE.Server.WorldObjects
                     LastPathfindingPosition = PhysicsObj.Position.ACEPosition();
 
                     // Move to the new position with physics
-                    MoveToPositionWithPhysics(offsetPosition);
+                    RunToPosition(offsetPosition);
                 } else
                 {
                     IsMoving = true;
                     log.Info($"CurrentLocation: {PhysicsObj.Position.ACEPosition().ToLOCString()}");
                     log.Info($"NextLocation: {destination.ToLOCString()}");
                     LastPathfindingPosition = PhysicsObj.Position.ACEPosition();
-                    MoveToPositionWithPhysics(destination);
+                    RunToPosition(destination);
                 }
             }
         }
