@@ -136,6 +136,11 @@ namespace ACE.Server.WorldObjects
                     EnchantmentManager.HeartBeat(enchantmentTickInterval, false);
                 enchantmentTickTimestamp = Time.GetFutureUnixTime(enchantmentTickInterval);
             }
+
+            if (IsMovingWithPathfinding)
+            {
+                PathFinding_Tick(currentUnixTime);
+            }
         }
 
         private static readonly TimeSpan MaximumTeleportTime = TimeSpan.FromMinutes(5);

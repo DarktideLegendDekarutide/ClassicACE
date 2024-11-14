@@ -32,6 +32,8 @@ using ACE.Server.WorldObjects.Entity;
 using ACE.Server.Network.Handlers;
 
 using Position = ACE.Entity.Position;
+using ACE.Server.Pathfinding;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace ACE.Server.Command.Handlers
 {
@@ -5106,7 +5108,7 @@ namespace ACE.Server.Command.Handlers
                 return;
 
             var town = string.Join(" ", parameters);
-            if(!EventManager.PossibleFireSaleTowns.Contains(town))
+            if (!EventManager.PossibleFireSaleTowns.Contains(town))
             {
                 session.Network.EnqueueSend(new GameMessageSystemChat($"Invalid town name.", ChatMessageType.Help));
                 return;
@@ -5119,6 +5121,32 @@ namespace ACE.Server.Command.Handlers
         public static void HandleProlongFireSaleTown(Session session, params string[] parameters)
         {
             EventManager.ProlongFireSaleTown();
+        }
+
+        [CommandHandler("navto", AccessLevel.Admin, CommandHandlerFlag.RequiresWorld, 0, "test for pathfinding")]
+        public static void HandleNavTo(Session session, params string[] parameters)
+        {
+            var objectId = ObjectGuid.Invalid;
+
+            var target = session.Player.CurrentAppraisalTarget;
+
+            if (target.HasValue)
+                objectId = new ObjectGuid((uint)session.Player.CurrentAppraisalTarget);
+
+
+            var wo = session.Player.CurrentLandblock?.GetObject(objectId);
+
+            if (wo is null)
+            {
+                session.Network.EnqueueSend(new GameMessageSystemChat($"Unable to locate what you have selected.", ChatMessageType.Broadcast));
+            }
+            
+            var player = session.Player;
+
+            if (wo is Creature creature)
+            {
+                creature.NavToPosition(player.Location);
+            }
         }
     }
 }

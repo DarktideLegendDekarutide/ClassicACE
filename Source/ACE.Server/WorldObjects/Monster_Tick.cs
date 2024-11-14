@@ -37,6 +37,14 @@ namespace ACE.Server.WorldObjects
 
             NextMonsterTickTime = currentUnixTime + monsterTickInterval;
 
+            if (IsDead) return;
+
+            if (IsMovingWithPathfinding)
+            {
+                PathFinding_Tick(currentUnixTime);
+                return;
+            }
+
             if (!IsAwake)
             {
                 if (MonsterState == State.Return)
@@ -47,8 +55,6 @@ namespace ACE.Server.WorldObjects
 
                 return;
             }
-
-            if (IsDead) return;
 
             if (EmoteManager.IsBusy) return;
 

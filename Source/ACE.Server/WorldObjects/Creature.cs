@@ -17,6 +17,9 @@ using ACE.Server.WorldObjects.Entity;
 using Position = ACE.Entity.Position;
 using ACE.Server.Factories;
 using ACE.Server.Factories.Tables;
+using System.Numerics;
+using System.Linq;
+using ACE.Server.Physics.Animation;
 
 namespace ACE.Server.WorldObjects
 {
@@ -28,6 +31,9 @@ namespace ACE.Server.WorldObjects
         public bool IsExhausted { get => Stamina.Current == 0; }
 
         protected QuestManager _questManager;
+
+
+        public Position? LastPosition = null;
 
         public QuestManager QuestManager
         {
@@ -499,6 +505,25 @@ namespace ACE.Server.WorldObjects
 
             EnqueueBroadcastMotion(moveToPosition);
         }
+        public void MoveToPositionWithPhysics(Position position)
+        {
+            var moveToPosition = new Motion(this, position);
+            moveToPosition.MoveToParameters.DistanceToObject = 0.0f;
+
+            SetWalkRunThreshold(moveToPosition, position);
+
+            EnqueueBroadcastMotion(moveToPosition);
+
+            // perform movement on server
+            var mvp = new MovementParameters(); 
+            mvp.DistanceToObject = moveToPosition.MoveToParameters.DistanceToObject; 
+            //mvp.UseFinalHeading = true;
+
+            PhysicsObj.MoveToPosition(new Physics.Common.Position(position), mvp);
+
+            // prevent snap forward
+            PhysicsObj.UpdateTime = Physics.Common.PhysicsTimer.CurrentTime;
+        }
 
         public void SetWalkRunThreshold(Motion motion, Position targetLocation)
         {
@@ -620,5 +645,7 @@ namespace ACE.Server.WorldObjects
             else // Tier 6.0
                 return 6f;
         }
+
+
     }
 }

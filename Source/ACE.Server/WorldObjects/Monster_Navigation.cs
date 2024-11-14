@@ -452,6 +452,9 @@ namespace ACE.Server.WorldObjects
 
         public void CheckMissHome()
         {
+            if (IsMovingWithPathfinding)
+                return;
+
             if (MonsterState == State.Return)
                 return;
 
