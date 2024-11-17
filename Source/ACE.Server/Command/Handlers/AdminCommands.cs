@@ -5123,8 +5123,8 @@ namespace ACE.Server.Command.Handlers
             EventManager.ProlongFireSaleTown();
         }
 
-        [CommandHandler("navto", AccessLevel.Admin, CommandHandlerFlag.RequiresWorld, 0, "test for pathfinding")]
-        public static void HandleNavTo(Session session, params string[] parameters)
+        [CommandHandler("patrol", AccessLevel.Admin, CommandHandlerFlag.RequiresWorld, 0, "Command a Mob to randomly patrol in a dungeon")]
+        public static void HandlePatrol(Session session, params string[] parameters)
         {
             var objectId = ObjectGuid.Invalid;
 
@@ -5145,8 +5145,56 @@ namespace ACE.Server.Command.Handlers
 
             if (wo is Creature creature)
             {
-                creature.NavToObject(player);
+                creature.Patrol();
             }
+        }
+
+        [CommandHandler("navtome", AccessLevel.Admin, CommandHandlerFlag.RequiresWorld, 0, "Command a mob to navigate to your current position.")]
+        public static void NavToMe(Session session, params string[] parameters)
+        {
+            var objectId = ObjectGuid.Invalid;
+
+            var target = session.Player.CurrentAppraisalTarget;
+
+            if (target.HasValue)
+                objectId = new ObjectGuid((uint)session.Player.CurrentAppraisalTarget);
+
+
+            var wo = session.Player.CurrentLandblock?.GetObject(objectId);
+
+            if (wo is null)
+            {
+                session.Network.EnqueueSend(new GameMessageSystemChat($"Unable to locate what you have selected.", ChatMessageType.Broadcast));
+            }
+            
+            var player = session.Player;
+
+            if (wo is Creature creature)
+                creature.NavToPosition(player.Location);
+        }
+
+        [CommandHandler("followme", AccessLevel.Admin, CommandHandlerFlag.RequiresWorld, 0, "Command a mob to follow you character around a dungeon.")]
+        public static void FollowMe(Session session, params string[] parameters)
+        {
+            var objectId = ObjectGuid.Invalid;
+
+            var target = session.Player.CurrentAppraisalTarget;
+
+            if (target.HasValue)
+                objectId = new ObjectGuid((uint)session.Player.CurrentAppraisalTarget);
+
+
+            var wo = session.Player.CurrentLandblock?.GetObject(objectId);
+
+            if (wo is null)
+            {
+                session.Network.EnqueueSend(new GameMessageSystemChat($"Unable to locate what you have selected.", ChatMessageType.Broadcast));
+            }
+            
+            var player = session.Player;
+
+            if (wo is Creature creature)
+                creature.NavToObject(player);
         }
     }
 }
