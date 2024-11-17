@@ -20,12 +20,12 @@ namespace ACE.Server.WorldObjects
     {
         private PathfindingState PathfindingState = new PathfindingState();
 
-        public bool IsPatrolCreature => PathfindingState.Type == PathfindingState.PathfindingType.Patrol;
-        public bool IsMovingWithPathfinding => PathfindingState.Type != PathfindingState.PathfindingType.None;
-        public bool IsNavToPosition => PathfindingState.Type == PathfindingState.PathfindingType.NavToPosition;
-        public bool IsNavToObject => PathfindingState.Type == PathfindingState.PathfindingType.NavToObject;
-        public bool IsPathfindingCombat => PathfindingState.Status == PathfindingState.PathfindingStatus.Combat;
-        public bool IsPathfindingResetting => PathfindingState.Status == PathfindingState.PathfindingStatus.Reset;
+        public bool IsPatrolCreature => PathfindingState.Type == PathfindingType.Patrol;
+        public bool IsMovingWithPathfinding => PathfindingState.Type != PathfindingType.None;
+        public bool IsNavToPosition => PathfindingState.Type == PathfindingType.NavToPosition;
+        public bool IsNavToObject => PathfindingState.Type == PathfindingType.NavToObject;
+        public bool IsPathfindingCombat => PathfindingState.Status == PathfindingStatus.Combat;
+        public bool IsPathfindingResetting => PathfindingState.Status == PathfindingStatus.Reset;
 
         
         /// <summary>
@@ -38,7 +38,7 @@ namespace ACE.Server.WorldObjects
             WakeUp(false);
             PathfindingState.TargetPosition = position;
             PathfindingState.TargetHostileRange = hostileTargetDetectRange; 
-            PathfindingState.Type = PathfindingState.PathfindingType.NavToPosition;
+            PathfindingState.Type = PathfindingType.NavToPosition;
         }
 
         /// <summary>
@@ -51,7 +51,7 @@ namespace ACE.Server.WorldObjects
             WakeUp(false);
             PathfindingState.TargetObject = wo;
             PathfindingState.TargetHostileRange = hostileTargetDetectRange; 
-            PathfindingState.Type = PathfindingState.PathfindingType.NavToObject;
+            PathfindingState.Type = PathfindingType.NavToObject;
         }
 
         /// <summary>
@@ -65,7 +65,7 @@ namespace ACE.Server.WorldObjects
             WakeUp(false);
             PathfindingState.TargetPosition = PathfinderManager.GetRandomPointOnMesh(Location, maxDistance);
             PathfindingState.TargetHostileRange = hostileTargetDetectRange; 
-            PathfindingState.Type = PathfindingState.PathfindingType.Patrol;
+            PathfindingState.Type = PathfindingType.Patrol;
         }
 
         /// <summary>
@@ -220,7 +220,7 @@ namespace ACE.Server.WorldObjects
 
             PathfindingState.TargetPosition = PathfinderManager.GetRandomPointOnMesh(Location, 100.0f);
             PathfindingState.LastPosition = null;
-            PathfindingState.Status = PathfindingState.PathfindingStatus.Reset;
+            PathfindingState.Status = PathfindingStatus.Reset;
         }
 
         /// <summary>
@@ -236,13 +236,13 @@ namespace ACE.Server.WorldObjects
             {
                 PathfindingState.TargetPosition = PathfindingState.TemporaryTargetPosition;
                 PathfindingState.TemporaryTargetPosition = null;
-                PathfindingState.Status = PathfindingState.PathfindingStatus.Idle;
+                PathfindingState.Status = PathfindingStatus.Idle;
             } else if (IsPatrolCreature)
                 Patrol(PathfindingState.TargetHostileRange);
             else
             {
-                PathfindingState.Type = PathfindingState.PathfindingType.None;
-                PathfindingState.Status = PathfindingState.PathfindingStatus.Idle;
+                PathfindingState.Type = PathfindingType.None;
+                PathfindingState.Status = PathfindingStatus.Idle;
             }
         }
 
@@ -251,7 +251,7 @@ namespace ACE.Server.WorldObjects
         /// </summary>
         public void SetPathfindingIdle()
         {
-            PathfindingState.Status = PathfindingState.PathfindingStatus.Idle;
+            PathfindingState.Status = PathfindingStatus.Idle;
         }
 
         /// <summary>
@@ -293,7 +293,7 @@ namespace ACE.Server.WorldObjects
             {
                 AttackTarget = closestCreature;
                 PathfindingState.LastPosition = null;
-                PathfindingState.Status = PathfindingState.PathfindingStatus.Combat;
+                PathfindingState.Status = PathfindingStatus.Combat;
                 return true;
             }
 

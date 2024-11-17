@@ -8,23 +8,23 @@ using System.Threading.Tasks;
 
 namespace ACE.Server.Entity
 {
+    public enum PathfindingType
+    {
+        None,
+        NavToObject,
+        NavToPosition,
+        Patrol
+    }
+
+    public enum PathfindingStatus
+    {
+        Idle,
+        Combat,
+        Reset
+    }
+
     public class PathfindingState
     {
-        public enum PathfindingType
-        {
-            None,
-            NavToObject,
-            NavToPosition,
-            Patrol
-        }
-
-        public enum PathfindingStatus
-        {
-            Idle,
-            Combat,
-            Reset
-        }
-
         public PathfindingType Type { get; set; } = PathfindingType.None;
         public PathfindingStatus Status { get; set; } = PathfindingStatus.Idle;
         public float TargetHostileRange { get; set; } = 20.0f;
