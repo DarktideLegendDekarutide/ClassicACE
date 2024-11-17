@@ -27,6 +27,51 @@ namespace ACE.Server.WorldObjects
         public bool IsPathfindingCombat => PathfindingState.Status == PathfindingState.PathfindingStatus.Combat;
         public bool IsPathfindingResetting => PathfindingState.Status == PathfindingState.PathfindingStatus.Reset;
 
+        
+        /// <summary>
+        /// A pathfinding action that navigates the creature to target target position 
+        /// </summary>
+        /// <param name="position"></param>
+        /// <param name="hostileTargetDetectRange"></param>
+        public void NavToPosition(Position position, float hostileTargetDetectRange = 20.0f)
+        {
+            WakeUp(false);
+            PathfindingState.TargetPosition = position;
+            PathfindingState.TargetHostileRange = hostileTargetDetectRange; 
+            PathfindingState.Type = PathfindingState.PathfindingType.NavToPosition;
+        }
+
+        /// <summary>
+        /// A pathfinding action that navigates the creature to a target WorldObject
+        /// </summary>
+        /// <param name="wo"></param>
+        /// <param name="hostileTargetDetectRange"></param>
+        public void NavToObject(WorldObject wo, float hostileTargetDetectRange = 20.0f)
+        {
+            WakeUp(false);
+            PathfindingState.TargetObject = wo;
+            PathfindingState.TargetHostileRange = hostileTargetDetectRange; 
+            PathfindingState.Type = PathfindingState.PathfindingType.NavToObject;
+        }
+
+        /// <summary>
+        /// A pathfinding action that navigates the creatures to random points within a landblock. New
+        /// paths are created after completing old paths
+        /// </summary>
+        /// <param name="hostileTargetDetectRange"></param>
+        /// <param name="maxDistance"></param>
+        public void Patrol(float hostileTargetDetectRange = 20.0f, float? maxDistance = null)
+        {
+            WakeUp(false);
+            PathfindingState.TargetPosition = PathfinderManager.GetRandomPointOnMesh(Location, maxDistance);
+            PathfindingState.TargetHostileRange = hostileTargetDetectRange; 
+            PathfindingState.Type = PathfindingState.PathfindingType.Patrol;
+        }
+
+        /// <summary>
+        /// Tick called from Player_Tick and Monster_Tick for pathfinding processing (called every second)
+        /// </summary>
+        /// <param name="currentUnixTime"></param>
         public void Pathfinding_Tick(double currentUnixTime)
         {
             NextMonsterTickTime = currentUnixTime + monsterTickInterval;
@@ -45,32 +90,10 @@ namespace ACE.Server.WorldObjects
             }
         }
 
-
-        public void NavToPosition(Position position, float hostileTargetDetectRange = 20.0f)
-        {
-            WakeUp(false);
-            PathfindingState.TargetPosition = position;
-            PathfindingState.TargetHostileRange = hostileTargetDetectRange; 
-            PathfindingState.Type = PathfindingState.PathfindingType.NavToPosition;
-        }
-
-        public void NavToObject(WorldObject wo, float hostileTargetDetectRange = 20.0f)
-        {
-            WakeUp(false);
-            PathfindingState.TargetObject = wo;
-            PathfindingState.TargetHostileRange = hostileTargetDetectRange; 
-            PathfindingState.Type = PathfindingState.PathfindingType.NavToObject;
-        }
-
-        public void Patrol(float hostileTargetDetectRange = 20.0f, float? maxDistance = null)
-        {
-            WakeUp(false);
-            PathfindingState.TargetPosition = PathfinderManager.GetRandomPointOnMesh(Location, maxDistance);
-            PathfindingState.TargetHostileRange = hostileTargetDetectRange; 
-            PathfindingState.Type = PathfindingState.PathfindingType.Patrol;
-        }
-
-
+        /// <summary>
+        /// The main state handler for processing pathfinding every tick
+        /// </summary>
+        /// <param name="currentUnixTime"></param>
         private void BeginPathfinding(double currentUnixTime)
         {
             PathfindingState.NextTickTime  = currentUnixTime + PathfindingState.MoveTime;
@@ -129,8 +152,11 @@ namespace ACE.Server.WorldObjects
             NavToPath(currentUnixTime, paths);
         }
 
-
-
+        /// <summary>
+        /// Perform the actual server side movement based on the paths and time provided
+        /// </summary>
+        /// <param name="currentUnixTime"></param>
+        /// <param name="paths"></param>
         private void NavToPath(double currentUnixTime, List<Position> paths)
         {
             var destination = paths.Count > 1 ? new Position(paths[1]) : paths[0];
@@ -178,7 +204,11 @@ namespace ACE.Server.WorldObjects
                 RunToPosition(destination);
             }
         }
-
+    
+        /// <summary>
+        /// Swap the primary path with a new randomly selected temporary path. This allows alternate navigation
+        /// when getting stuck
+        /// </summary>
         private void ResetPath()
         {
             log.Info("Resetting Path!");
@@ -193,6 +223,9 @@ namespace ACE.Server.WorldObjects
             PathfindingState.Status = PathfindingState.PathfindingStatus.Reset;
         }
 
+        /// <summary>
+        /// Called when pathfinding has been canceled or has reached the end condition
+        /// </summary>
         public void FinishPathfinding()
         {
 
@@ -212,11 +245,20 @@ namespace ACE.Server.WorldObjects
                 PathfindingState.Status = PathfindingState.PathfindingStatus.Idle;
             }
         }
+
+        /// <summary>
+        ///  Set path finding state to Idle, used externally
+        /// </summary>
         public void SetPathfindingIdle()
         {
             PathfindingState.Status = PathfindingState.PathfindingStatus.Idle;
         }
 
+        /// <summary>
+        /// Find the closest door within visible range and open it
+        /// </summary>
+        /// <param name="visibleObjects"></param>
+        /// <returns></returns>
         private bool ScanForDoor(List<WorldObject>? visibleObjects = null)
         {
             visibleObjects = visibleObjects ?? PhysicsObj.ObjMaint.GetVisibleObjectsValues()
@@ -234,6 +276,12 @@ namespace ACE.Server.WorldObjects
 
             return false;
         }
+
+        /// <summary>
+        /// Find creatures within visible range and aggro them if close enough
+        /// </summary>
+        /// <param name="visibleObjects"></param>
+        /// <returns></returns>
         private bool ScanForCreatures(List<WorldObject>? visibleObjects = null)
         {
             visibleObjects = visibleObjects ?? PhysicsObj.ObjMaint.GetVisibleObjectsValues()
@@ -252,6 +300,10 @@ namespace ACE.Server.WorldObjects
             return false;
         }
 
+        /// <summary>
+        /// Main handler for pathfind scanning, usually called when getting stuck 
+        /// </summary>
+        /// <returns></returns>
         private bool PathfindScan()
         {
             //NextPathfindScan = currentUnixTime + PathfindScanTime;
@@ -267,6 +319,10 @@ namespace ACE.Server.WorldObjects
             return false;
         }
 
+        /// <summary>
+        /// Server action that broadcasts and performs server movement with physics
+        /// </summary>
+        /// <param name="position"></param>
         public void RunToPosition(Position position)
         {
             var moveToPosition = new Motion(this, position);
