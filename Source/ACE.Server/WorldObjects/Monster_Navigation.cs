@@ -452,8 +452,6 @@ namespace ACE.Server.WorldObjects
 
         public void CheckMissHome()
         {
-            if (IsMovingWithPathfinding)
-                return;
 
             if (MonsterState == State.Return)
                 return;
@@ -474,6 +472,9 @@ namespace ACE.Server.WorldObjects
 
         public void MoveToHome()
         {
+            if (IsMovingWithPathfinding || IsPatrolCreature)
+                return;
+
             if (DebugMove)
                 Console.WriteLine($"{Name}.MoveToHome()");
 
