@@ -224,7 +224,12 @@ namespace ACE.Server.Entity
                 if(obj.Value is Creature creature)
                 {
                     if (!(creature is Player) && creature.PlayerKillerStatus != PlayerKillerStatus.RubberGlue && creature.PlayerKillerStatus != PlayerKillerStatus.Protected)
-                        PositionsForExplorationMarkers.Add(creature.Location.InFrontOf(-0.5f));
+                    {
+                        // using nav mesh
+                        var pos = PathfinderManager.GetRandomPointOnMesh(creature.Location);
+                        if (pos != null)
+                            PositionsForExplorationMarkers.Add(pos);
+                    }
                 }
             }
 
