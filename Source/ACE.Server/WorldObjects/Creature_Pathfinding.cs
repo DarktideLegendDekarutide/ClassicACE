@@ -22,7 +22,10 @@ namespace ACE.Server.WorldObjects
 
         public bool IsPatrolCreature => PathfindingState.Type == PathfindingState.PathfindingType.Patrol;
         public bool IsMovingWithPathfinding => PathfindingState.Type != PathfindingState.PathfindingType.None;
+        public bool IsNavToPosition => PathfindingState.Type == PathfindingState.PathfindingType.NavToPosition;
+        public bool IsNavToObject => PathfindingState.Type == PathfindingState.PathfindingType.NavToObject;
         public bool IsPathfindingCombat => PathfindingState.Status == PathfindingState.PathfindingStatus.Combat;
+        public bool IsPathfindingResetting => PathfindingState.Status == PathfindingState.PathfindingStatus.Reset;
 
         public void Pathfinding_Tick(double currentUnixTime)
         {
@@ -42,66 +45,6 @@ namespace ACE.Server.WorldObjects
             }
         }
 
-        public void SetPathfindingIdle()
-        {
-            PathfindingState.Status = PathfindingState.PathfindingStatus.Idle;
-        }
-
-        private bool ScanForDoor(List<WorldObject>? visibleObjects = null)
-        {
-            visibleObjects = visibleObjects ?? PhysicsObj.ObjMaint.GetVisibleObjectsValues()
-                .Select(o => o.WeenieObj.WorldObject).Where(wo => wo != null).OrderBy(wo => wo.Location.Distance2DSquared(Location)).ToList();
-
-            var closestDoors = visibleObjects.OfType<Door>().ToList();
-
-            var closestDoor = closestDoors.FirstOrDefault();
-
-            var closestDoorDistance = closestDoor?.Location.Distance2DSquared(Location);
-
-            if (closestDoor != null && !closestDoor.IsOpen && !closestDoor.IsLocked && closestDoorDistance.HasValue && closestDoorDistance.Value < 50)
-            {
-                closestDoor.Open();
-                return true;
-            }
-
-            return false;
-        }
-        private bool ScanForCreatures(List<WorldObject>? visibleObjects = null)
-        {
-            visibleObjects = visibleObjects ?? PhysicsObj.ObjMaint.GetVisibleObjectsValues()
-                .Select(o => o.WeenieObj.WorldObject).Where(wo => wo != null).OrderBy(wo => wo.Location.Distance2DSquared(Location)).ToList();
-
-            var closestCreatures = visibleObjects.OfType<Creature>().Where(creature => !creature.IsDead).ToList();
-
-
-            var closestCreature = closestCreatures.FirstOrDefault();
-
-
-            if (closestCreature != null && closestCreature.Location.Distance2DSquared(Location) < 2)
-            {
-                AttackTarget = closestCreature;
-                PathfindingState.LastPosition = null;
-                PathfindingState.Status = PathfindingState.PathfindingStatus.Combat;
-                return true;
-            }
-
-            return false;
-        }
-
-        private bool PathfindScan()
-        {
-            //NextPathfindScan = currentUnixTime + PathfindScanTime;
-            var visibleObjects = PhysicsObj.ObjMaint.GetVisibleObjectsValues()
-                .Select(o => o.WeenieObj.WorldObject).Where(wo => wo != null).OrderBy(wo => wo.Location.Distance2DSquared(Location)).ToList();
-
-            if (ScanForCreatures(visibleObjects))
-                return true;
-
-            if (ScanForDoor(visibleObjects))
-                return true;
-
-            return false;
-        }
 
         public void NavToPosition(Position position, float hostileTargetDetectRange = 20.0f)
         {
@@ -132,23 +75,23 @@ namespace ACE.Server.WorldObjects
         {
             PathfindingState.NextTickTime  = currentUnixTime + PathfindingState.MoveTime;
 
-            if (PathfindingState.Type == PathfindingState.PathfindingType.NavToPosition && PathfindingState.TargetPosition == null)
+            if (IsNavToPosition && PathfindingState.TargetPosition == null)
                 return;
 
-            if (PathfindingState.Type == PathfindingState.PathfindingType.NavToObject && PathfindingState.TargetObject == null)
+            if (IsNavToObject && PathfindingState.TargetObject == null)
                 return;
 
-            if (PathfindingState.Status == PathfindingState.PathfindingStatus.Combat)
+            if (IsPathfindingCombat)
                 return;
 
             var targetPosition = PathfindingState.TargetObject?.PhysicsObj.Position.ACEPosition() ?? PathfindingState.TargetPosition;
 
-            if (PathfindingState.Status == PathfindingState.PathfindingStatus.Reset)
+            if (IsPathfindingResetting)
                 targetPosition = PathfindingState.TargetPosition;
 
             if (targetPosition == null)
             {
-                log.Info("Couldn't find a target position, finishing path finding");
+                //log.Info("Couldn't find a target position, finishing path finding");
                 FinishPathfinding();
                 return;
             }
@@ -157,14 +100,14 @@ namespace ACE.Server.WorldObjects
 
             if (distance < 2)
             {
-                log.Info("Reached destination, finishing PathFind");
+                //log.Info("Reached destination, finishing PathFind");
                 FinishPathfinding();
                 return;
             }
 
             if (targetPosition.Landblock != Location.Landblock)
             {
-                log.Info("Objects can only follow other objects within the same landblock");
+                //log.Info("Objects can only follow other objects within the same landblock");
                 FinishPathfinding();
                 return;
             }
@@ -172,17 +115,17 @@ namespace ACE.Server.WorldObjects
             if (IsMoving && currentUnixTime < PathfindingState.LastMoveTime + 5)
                 return;
 
-            log.Info($"Distance to path: {distance}");
+            //log.Info($"Distance to path: {distance}");
             var paths = PathfinderManager.FindRoute(PhysicsObj.Position.ACEPosition(), targetPosition);
 
             if (paths is null)
             {
-                log.Info("Path is null, stopping");
+                //log.Info("Path is null, stopping");
                 CancelMoveTo();
                 return;
             }
 
-            log.Info($"PathsCount: {paths.Count}");
+            //log.Info($"PathsCount: {paths.Count}");
             NavToPath(currentUnixTime, paths);
         }
 
@@ -194,7 +137,7 @@ namespace ACE.Server.WorldObjects
 
             if (destination == null)
             {
-                log.Info("No paths found! finishing pathfind navigation");
+                //log.Info("No paths found! finishing pathfind navigation");
                 FinishPathfinding();
                 return;
             }
@@ -209,9 +152,9 @@ namespace ACE.Server.WorldObjects
                 IsMoving = true;
                 PathfindingState.StuckCount++;
 
-                log.Info("Stuck in position!");
-                log.Info($"CurrentLocation: {PhysicsObj.Position.ACEPosition().ToLOCString()}");
-                log.Info($"StuckCount: {PathfindingState.StuckCount.ToString()}");
+                //log.Info("Stuck in position!");
+                //log.Info($"CurrentLocation: {PhysicsObj.Position.ACEPosition().ToLOCString()}");
+                //log.Info($"StuckCount: {PathfindingState.StuckCount.ToString()}");
 
                 if (PathfindingState.StuckCount > 1)
                     ResetPath();
@@ -228,8 +171,8 @@ namespace ACE.Server.WorldObjects
 
                 IsMoving = true;
                 PathfindingState.StuckCount = 0;
-                log.Info($"CurrentLocation: {PhysicsObj.Position.ACEPosition().ToLOCString()}");
-                log.Info($"NextLocation: {destination.ToLOCString()}");
+                //log.Info($"CurrentLocation: {PhysicsObj.Position.ACEPosition().ToLOCString()}");
+                //log.Info($"NextLocation: {destination.ToLOCString()}");
                 ScanForDoor();
                 PathfindingState.LastPosition = PhysicsObj.Position.ACEPosition();
                 RunToPosition(destination);
@@ -241,7 +184,8 @@ namespace ACE.Server.WorldObjects
             log.Info("Resetting Path!");
             //NextStuckBackoff = currentUnixTime + 10;
 
-            if (PathfindingState.Status != PathfindingState.PathfindingStatus.Reset)
+            // If first time resetting, assign the current primary position to the temporary position
+            if (!IsPathfindingResetting)
                 PathfindingState.TemporaryTargetPosition = PathfindingState.TargetPosition;
 
             PathfindingState.TargetPosition = PathfinderManager.GetRandomPointOnMesh(Location, 100.0f);
@@ -255,18 +199,72 @@ namespace ACE.Server.WorldObjects
             PathfindingState.TargetPosition = null;
             PathfindingState.TargetObject = null;
 
-            if (PathfindingState.Status == PathfindingState.PathfindingStatus.Reset)
+            if (IsPathfindingResetting)
             {
                 PathfindingState.TargetPosition = PathfindingState.TemporaryTargetPosition;
                 PathfindingState.TemporaryTargetPosition = null;
                 PathfindingState.Status = PathfindingState.PathfindingStatus.Idle;
-            } else if (PathfindingState.Type == PathfindingState.PathfindingType.Patrol)
+            } else if (IsPatrolCreature)
                 Patrol(PathfindingState.TargetHostileRange);
             else
             {
                 PathfindingState.Type = PathfindingState.PathfindingType.None;
                 PathfindingState.Status = PathfindingState.PathfindingStatus.Idle;
             }
+        }
+        public void SetPathfindingIdle()
+        {
+            PathfindingState.Status = PathfindingState.PathfindingStatus.Idle;
+        }
+
+        private bool ScanForDoor(List<WorldObject>? visibleObjects = null)
+        {
+            visibleObjects = visibleObjects ?? PhysicsObj.ObjMaint.GetVisibleObjectsValues()
+                .Select(o => o.WeenieObj.WorldObject).Where(wo => wo != null).OrderBy(wo => wo.Location.Distance2DSquared(Location)).ToList();
+            var closestDoors = visibleObjects.OfType<Door>().ToList();
+            var closestDoor = closestDoors.FirstOrDefault();
+
+            var closestDoorDistance = closestDoor?.Location.Distance2DSquared(Location);
+
+            if (closestDoor != null && !closestDoor.IsOpen && !closestDoor.IsLocked && closestDoorDistance.HasValue && closestDoorDistance.Value < 50)
+            {
+                closestDoor.Open();
+                return true;
+            }
+
+            return false;
+        }
+        private bool ScanForCreatures(List<WorldObject>? visibleObjects = null)
+        {
+            visibleObjects = visibleObjects ?? PhysicsObj.ObjMaint.GetVisibleObjectsValues()
+                .Select(o => o.WeenieObj.WorldObject).Where(wo => wo != null).OrderBy(wo => wo.Location.Distance2DSquared(Location)).ToList();
+            var closestCreatures = visibleObjects.OfType<Creature>().Where(creature => !creature.IsDead).ToList();
+            var closestCreature = closestCreatures.FirstOrDefault();
+
+            if (closestCreature != null && closestCreature.Location.Distance2DSquared(Location) < 2)
+            {
+                AttackTarget = closestCreature;
+                PathfindingState.LastPosition = null;
+                PathfindingState.Status = PathfindingState.PathfindingStatus.Combat;
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool PathfindScan()
+        {
+            //NextPathfindScan = currentUnixTime + PathfindScanTime;
+            var visibleObjects = PhysicsObj.ObjMaint.GetVisibleObjectsValues()
+                .Select(o => o.WeenieObj.WorldObject).Where(wo => wo != null).OrderBy(wo => wo.Location.Distance2DSquared(Location)).ToList();
+
+            if (ScanForCreatures(visibleObjects))
+                return true;
+
+            if (ScanForDoor(visibleObjects))
+                return true;
+
+            return false;
         }
 
         public void RunToPosition(Position position)
