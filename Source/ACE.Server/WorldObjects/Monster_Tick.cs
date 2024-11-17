@@ -86,16 +86,16 @@ namespace ACE.Server.WorldObjects
                     playerTarget.EndSneaking($"{Name} can still see you! You stop sneaking!");
             }
 
-            if ((creatureTarget != null && PfState != PathfindingState.Combat) && (creatureTarget.IsDead || (combatPet == null && !IsVisibleTarget(creatureTarget))) || (playerTarget != null && playerTarget.IsSneaking))
+            if ((creatureTarget != null && !IsPathfindingCombat) && (creatureTarget.IsDead || (combatPet == null && !IsVisibleTarget(creatureTarget))) || (playerTarget != null && playerTarget.IsSneaking))
             {
                 FindNextTarget();
                 return;
             }
 
-            if (creatureTarget != null && creatureTarget.IsDead && PfState == PathfindingState.Combat)
+            if (creatureTarget != null && creatureTarget.IsDead && IsPathfindingCombat)
             {
                 AttackTarget = null;
-                PfState = PathfindingState.Idle;
+                SetPathfindingIdle();
                 return;
             }
 
