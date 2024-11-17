@@ -48,6 +48,9 @@ namespace ACE.Server.WorldObjects
             if (DebugMove)
                 Console.WriteLine($"{Name} ({Guid}).Sleep()");
 
+            if (IsMovingWithPathfinding)
+                return;
+
             SetCombatMode(CombatMode.NonCombat);
 
             CurrentAttack = null;
