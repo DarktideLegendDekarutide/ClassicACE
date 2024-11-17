@@ -138,7 +138,7 @@ namespace ACE.Server.WorldObjects
                             if (GetCreatureSkill(Skill.DirtyFighting).AdvancementClass >= SkillAdvancementClass.Trained)
                                 FightDirty(targetPlayer, damageEvent.Weapon);
                         }
-                        else if (combatPet != null || targetPet != null || Faction1Bits != null || target.Faction1Bits != null || PotentialFoe(target))
+                        else if (combatPet != null || targetPet != null || Faction1Bits != null || target.Faction1Bits != null || PotentialFoe(target) || PfState == PathfindingState.Combat)
                         {
                             // combat pet inflicting or receiving damage
                             //Console.WriteLine($"{target.Name} taking {Math.Round(damage)} {damageType} damage from {Name}");
