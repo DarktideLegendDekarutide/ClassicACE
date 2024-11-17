@@ -2788,6 +2788,9 @@ namespace ACE.Server.Physics
         {
             if (WeenieObj.IsMonster)
             {
+                if (WeenieObj.WorldObject is Creature creature && creature.IsMovingWithPathfinding)
+                    handle_visible_cells();
+
                 // players and combat pets
                 var visibleTargets = ObjMaint.GetVisibleObjects(CurCell, ObjectMaint.VisibleObjectType.AttackTargets);
 

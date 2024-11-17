@@ -766,7 +766,7 @@ namespace ACE.Server.Physics.Common
             // only tracking players who know about this object
             if (!obj.IsPlayer)
             {
-                Console.WriteLine($"{PhysicsObj.Name}.ObjectMaint.AddKnownPlayer({obj.Name}): tried to add a non-player");
+                //Console.WriteLine($"{PhysicsObj.Name}.ObjectMaint.AddKnownPlayer({obj.Name}): tried to add a non-player");
                 return false;
             }
             if (PhysicsObj.DatObject)
@@ -970,9 +970,9 @@ namespace ACE.Server.Physics.Common
                     return false;
 
                 // only tracking players and combat pets
-                if (!obj.IsPlayer && !obj.WeenieObj.IsCombatPet && PhysicsObj.WeenieObj.FoeType == null)
+                if (!obj.IsPlayer  && !obj.WeenieObj.IsCombatPet && PhysicsObj.WeenieObj.FoeType == null)
                 {
-                    Console.WriteLine($"{PhysicsObj.Name}.ObjectMaint.AddVisibleTarget({obj.Name}): tried to add a non-player / non-combat pet");
+                    //Console.WriteLine($"{PhysicsObj.Name}.ObjectMaint.AddVisibleTarget({obj.Name}): tried to add a non-player / non-combat pet");
                     return false;
                 }
             }

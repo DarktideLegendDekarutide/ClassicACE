@@ -37,15 +37,7 @@ namespace ACE.Server.WorldObjects
 
             NextMonsterTickTime = currentUnixTime + monsterTickInterval;
 
-            if (IsDead) return;
-
-            if (IsMovingWithPathfinding)
-            {
-                Pathfinding_Tick(currentUnixTime);
-                return;
-            }
-
-            if (!IsAwake)
+            if (!IsAwake && !IsMovingWithPathfinding)
             {
                 if (MonsterState == State.Return)
                     MonsterState = State.Idle;
@@ -56,11 +48,20 @@ namespace ACE.Server.WorldObjects
                 return;
             }
 
+            if (IsDead)
+            {
+                FinishPathfinding();
+                return;
+            }
+
             if (EmoteManager.IsBusy) return;
 
             HandleFindTarget();
 
             CheckMissHome();    // tickrate?
+
+            if (IsMovingWithPathfinding)
+                Pathfinding_Tick(currentUnixTime);
 
             if (AttackTarget == null && MonsterState != State.Return)
             {
@@ -85,9 +86,16 @@ namespace ACE.Server.WorldObjects
                     playerTarget.EndSneaking($"{Name} can still see you! You stop sneaking!");
             }
 
-            if (creatureTarget != null && (creatureTarget.IsDead || (combatPet == null && !IsVisibleTarget(creatureTarget))) || (playerTarget != null && playerTarget.IsSneaking))
+            if ((creatureTarget != null && PfState != PathfindingState.Combat) && (creatureTarget.IsDead || (combatPet == null && !IsVisibleTarget(creatureTarget))) || (playerTarget != null && playerTarget.IsSneaking))
             {
                 FindNextTarget();
+                return;
+            }
+
+            if (creatureTarget != null && creatureTarget.IsDead && PfState == PathfindingState.Combat)
+            {
+                AttackTarget = null;
+                PfState = PathfindingState.Idle;
                 return;
             }
 
