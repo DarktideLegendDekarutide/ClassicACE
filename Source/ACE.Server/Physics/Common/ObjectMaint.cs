@@ -965,6 +965,10 @@ namespace ACE.Server.Physics.Common
                     return false;
                 }
 
+                // only track creatures that aren't cloaked
+                if (obj.WeenieObj.WorldObject is Creature creature && creature.Cloaked.HasValue && creature.Cloaked.Value)
+                    return false;
+
                 // only tracking players and combat pets
                 if (!obj.IsPlayer && !obj.WeenieObj.IsCombatPet && PhysicsObj.WeenieObj.FoeType == null)
                 {
