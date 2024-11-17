@@ -91,12 +91,7 @@ namespace ACE.Server.Pathfinding
             return path.Select(p => new Position(start.Cell, new Vector3(p.pos.X, p.pos.Z, p.pos.Y), Quaternion.Identity)).ToList();
         }
 
-        /// <summary>
-        /// Get a random point on the navmesh
-        /// </summary>
-        /// <param name="start"></param>
-        /// <returns></returns>
-        public Position? GetRandomPointOnMesh(Position start)
+        public Position? GetRandomPointOnMesh(Position start, float? maxDistance = null)
         {
             if (!TryGetMesh(start, out var mesh) || mesh is null)
             {
@@ -106,10 +101,36 @@ namespace ACE.Server.Pathfinding
             var query = new DtNavMeshQuery(mesh);
             var m_filter = new DtQueryDefaultFilter();
             var frand = new RcRand(DateTime.Now.Ticks);
+            var halfExtents = new RcVec3f(1.25f, 1.25f, 1.25f);
 
-            query.FindRandomPoint(m_filter, frand, out long randomRef, out var randomPt);
+            var startStatus = query.FindNearestPoly(new RcVec3f(start.PositionX, start.PositionZ, start.PositionY), halfExtents, m_filter, out long startRef, out var startPt, out bool isStartOverPoly);
 
-            return new Position(start.Landblock, new Vector3(randomPt.X, randomPt.Z, randomPt.Y), Quaternion.Identity);
+            if (startStatus.IsEmpty())
+            {
+                return null; 
+            }
+
+            if (maxDistance.HasValue)
+            {
+                query.FindRandomPointWithinCircle(startRef, startPt, maxDistance.Value, m_filter, frand,
+                                                   out long randomRef, out RcVec3f randomPt);
+
+                if (randomRef != 0)
+                {
+                    return new Position(start.Cell, new Vector3(randomPt.X, randomPt.Z, randomPt.Y), Quaternion.Identity);
+                }
+            }
+            else
+            {
+                query.FindRandomPoint(m_filter, frand, out long randomRef, out RcVec3f randomPt);
+
+                if (randomRef != 0)
+                {
+                    return new Position(start.Cell, new Vector3(randomPt.X, randomPt.Z, randomPt.Y), Quaternion.Identity);
+                }
+            }
+
+            return null;
         }
 
         private bool TryGetMesh(Position pos, out DtNavMesh? mesh)

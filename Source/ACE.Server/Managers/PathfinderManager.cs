@@ -5,9 +5,9 @@ using System.Collections.Generic;
 
 namespace ACE.Server.Managers
 {
-    internal static class PathfinderManager
+    public static class PathfinderManager
     {
-        private static PathFinder _pathFinder { get; set; } 
+        private static PathFinder _pathFinder { get; set; }
 
         public static void Init()
         {
@@ -19,6 +19,10 @@ namespace ACE.Server.Managers
             return _pathFinder.FindRoute(start, end);
         }
 
+        public static Position? GetRandomPointOnMesh(Position start, float? maxDistance = null)
+        {
+            return _pathFinder.GetRandomPointOnMesh(start, maxDistance);
+        }
     }
 }
 
