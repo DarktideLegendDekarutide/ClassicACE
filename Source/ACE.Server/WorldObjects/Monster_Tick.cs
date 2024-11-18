@@ -1,5 +1,6 @@
 using ACE.Entity;
 using ACE.Entity.Enum;
+using ACE.Server.Entity;
 using System;
 
 namespace ACE.Server.WorldObjects
@@ -94,8 +95,7 @@ namespace ACE.Server.WorldObjects
 
             if (creatureTarget != null && creatureTarget.IsDead && IsPathfindingCombat)
             {
-                AttackTarget = null;
-                SetPathfindingIdle();
+                FinishPathfindingCombat();
                 return;
             }
 

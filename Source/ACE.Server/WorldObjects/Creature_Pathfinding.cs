@@ -52,6 +52,7 @@ namespace ACE.Server.WorldObjects
             PathfindingState.TargetObject = wo;
             PathfindingState.TargetHostileRange = hostileTargetDetectRange; 
             PathfindingState.Type = PathfindingType.NavToObject;
+            wo.AddPathfindingFollower(this);
         }
 
         /// <summary>
@@ -211,8 +212,8 @@ namespace ACE.Server.WorldObjects
         /// </summary>
         private void ResetPath()
         {
-            log.Info("Resetting Path!");
             //NextStuckBackoff = currentUnixTime + 10;
+            //log.Info("Resetting Path!");
 
             // If first time resetting, assign the current primary position to the temporary position
             if (!IsPathfindingResetting)
@@ -226,18 +227,23 @@ namespace ACE.Server.WorldObjects
         /// <summary>
         /// Called when pathfinding has been canceled or has reached the end condition
         /// </summary>
-        public void FinishPathfinding()
+        public void FinishPathfinding(bool force = false)
         {
 
             PathfindingState.TargetPosition = null;
-            PathfindingState.TargetObject = null;
 
-            if (IsPathfindingResetting)
+            if (PathfindingState.TargetObject != null)
+            {
+                PathfindingState.TargetObject.RemovePathfindingFollower(this);
+                PathfindingState.TargetObject = null;
+            }
+
+            if (IsPathfindingResetting && !force)
             {
                 PathfindingState.TargetPosition = PathfindingState.TemporaryTargetPosition;
                 PathfindingState.TemporaryTargetPosition = null;
                 PathfindingState.Status = PathfindingStatus.Idle;
-            } else if (IsPatrolCreature)
+            } else if (IsPatrolCreature && !force)
                 Patrol(PathfindingState.TargetHostileRange);
             else
             {
@@ -246,11 +252,9 @@ namespace ACE.Server.WorldObjects
             }
         }
 
-        /// <summary>
-        ///  Set path finding state to Idle, used externally
-        /// </summary>
-        public void SetPathfindingIdle()
+        public void FinishPathfindingCombat()
         {
+            AttackTarget = null;
             PathfindingState.Status = PathfindingStatus.Idle;
         }
 
