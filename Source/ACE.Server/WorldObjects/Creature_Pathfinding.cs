@@ -26,11 +26,12 @@ namespace ACE.Server.WorldObjects
         public bool IsNavToObject => PathfindingState.Type == PathfindingType.NavToObject;
         public bool IsPathfindingCombat => PathfindingState.Status == PathfindingStatus.Combat;
         public bool IsPathfindingResetting => PathfindingState.Status == PathfindingStatus.Reset;
+        public bool IsNavigating => PathfindingState.Status == PathfindingStatus.Navigating;
         public bool IsIdle => PathfindingState.Status == PathfindingStatus.Idle;
 
         
         /// <summary>
-        /// A pathfinding action that navigates the creature to target target position 
+        /// A pathfinding action that navigates the creature to a target position 
         /// </summary>
         /// <param name="position"></param>
         /// <param name="hostileTargetDetectRange"></param>
@@ -105,6 +106,9 @@ namespace ACE.Server.WorldObjects
         private void BeginPathfinding(double currentUnixTime)
         {
             PathfindingState.NextTickTime  = currentUnixTime + PathfindingState.MoveTime;
+
+            if (IsIdle)
+                return;
 
             if (IsNavToPosition && PathfindingState.TargetPosition == null)
             {
@@ -302,7 +306,7 @@ namespace ACE.Server.WorldObjects
         public void FinishPathfindingCombat()
         {
             AttackTarget = null;
-            PathfindingState.Status = PathfindingStatus.Idle;
+            PathfindingState.Status = PathfindingStatus.Navigating;
             //log.Info("Exit combat state");
         }
 
