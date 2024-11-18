@@ -51,7 +51,6 @@ namespace ACE.Server.WorldObjects
 
             if (IsDead)
             {
-                FinishPathfinding();
                 return;
             }
 
@@ -93,10 +92,14 @@ namespace ACE.Server.WorldObjects
                 return;
             }
 
-            if (creatureTarget != null && creatureTarget.IsDead && IsPathfindingCombat)
+            if (creatureTarget != null && IsPathfindingCombat)
             {
-                FinishPathfindingCombat();
-                return;
+                if (creatureTarget.IsDead || creatureTarget.IsDestroyed || Location.Distance2DSquared(creatureTarget.Location) > 20)
+                {
+                    FinishPathfindingCombat();
+                    return;
+                }
+
             }
 
             if (firstUpdate)

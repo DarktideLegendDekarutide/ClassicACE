@@ -19,6 +19,7 @@ namespace ACE.Server.Entity
     public enum PathfindingStatus
     {
         Idle,
+        Navigating,
         Combat,
         Reset
     }

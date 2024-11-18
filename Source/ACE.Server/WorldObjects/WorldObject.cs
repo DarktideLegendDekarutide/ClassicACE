@@ -897,10 +897,12 @@ namespace ACE.Server.WorldObjects
                     }
                 }
 
-                creature.FinishPathfinding();
+                if (creature.IsMovingWithPathfinding)
+                    creature.FinishPathfinding();
             }
 
-            EndPathfindingFollowers();
+            if (PathfindingFollowers.Count > 0)
+                EndPathfindingFollowers();
 
             if (this is Pet pet && pet.P_PetOwner?.CurrentActivePet == this)
                 pet.P_PetOwner.CurrentActivePet = null;

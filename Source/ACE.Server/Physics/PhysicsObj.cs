@@ -2786,17 +2786,23 @@ namespace ACE.Server.Physics
 
         public void handle_visible_cells_non_player()
         {
-            if (WeenieObj.IsMonster)
+            if(WeenieObj.WorldObject is Creature creature && creature.IsMovingWithPathfinding)
             {
-                if (WeenieObj.WorldObject is Creature creature && creature.IsMovingWithPathfinding)
-                    handle_visible_cells();
+                handle_visible_cells();
 
                 // players and combat pets
                 var visibleTargets = ObjMaint.GetVisibleObjects(CurCell, ObjectMaint.VisibleObjectType.AttackTargets);
 
                 var newTargets = ObjMaint.AddVisibleTargets(visibleTargets);
             }
-            else
+            else if (WeenieObj.IsMonster)
+            {
+                // players and combat pets
+                var visibleTargets = ObjMaint.GetVisibleObjects(CurCell, ObjectMaint.VisibleObjectType.AttackTargets);
+
+                var newTargets = ObjMaint.AddVisibleTargets(visibleTargets);
+            }
+            else             
             {
                 // everything except monsters
                 // usually these are server objects whose position never changes
