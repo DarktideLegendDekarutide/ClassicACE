@@ -149,12 +149,16 @@ namespace ACE.Server.WorldObjects
                 return;
             }
 
-            var targetPosition = PathfindingState.TemporaryTargetPosition ?? PathfindingState.HostilePosition ?? PathfindingState.TargetObject?.PhysicsObj.Position.ACEPosition() ?? PathfindingState.TargetPosition;
+            var targetPosition =
+                PathfindingState.TemporaryTargetPosition ??
+                PathfindingState.HostilePosition ??
+                PathfindingState.TargetObject?.PhysicsObj.Position.ACEPosition() ??
+                PathfindingState.TargetPosition;
 
             if (targetPosition == null)
             {
                 //log.Info("Couldn't find a target position, finishing path finding");
-                FinishPathfinding();
+                FinishPathfinding(true);
                 return;
             }
 
