@@ -174,7 +174,7 @@ namespace ACE.Server.WorldObjects
             if (targetPosition.Landblock != Location.Landblock)
             {
                 //log.Info("Objects can only follow other objects within the same landblock");
-                FinishPathfinding();
+                FinishPathfinding(true);
                 return;
             }
 
