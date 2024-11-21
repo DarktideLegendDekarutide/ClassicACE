@@ -1725,6 +1725,9 @@ namespace ACE.Server.WorldObjects
             Console.WriteLine($"Attackable: {monster.Attackable}");
             Console.WriteLine($"Tolerance: {monster.Tolerance}");*/
 
+            if (IsMovingWithPathfinding)
+                OnPathfindCreatureAttack(monster);
+
             // when a faction mob attacks a regular mob, the regular mob will retaliate against the faction mob
             if (Faction1Bits != null && (monster.Faction1Bits == null || (Faction1Bits & monster.Faction1Bits) == 0))
                 monster.AddRetaliateTarget(this);

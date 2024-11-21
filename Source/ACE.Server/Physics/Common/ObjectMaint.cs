@@ -965,12 +965,21 @@ namespace ACE.Server.Physics.Common
                     return false;
                 }
 
+                var creature = obj.WeenieObj.WorldObject as Creature; 
+
                 // only track creatures that aren't cloaked
-                if (obj.WeenieObj.WorldObject is Creature creature && creature.Cloaked.HasValue && creature.Cloaked.Value)
+                if (creature != null && creature.Cloaked.HasValue && creature.Cloaked.Value)
                     return false;
 
-                // only tracking players and combat pets
-                if (!obj.IsPlayer  && !obj.WeenieObj.IsCombatPet && PhysicsObj.WeenieObj.FoeType == null)
+                var isPathfinding = creature != null && creature.IsMovingWithPathfinding;
+
+                if (isPathfinding)
+                {
+                    if (creature.HasPathfindingAlly(PhysicsObj.WeenieObj.WorldObject as Creature))
+                        return false;
+                }
+                // only tracking players, pathfinding ally mobs, and combat pets
+                else if (!obj.IsPlayer && !obj.WeenieObj.IsCombatPet && PhysicsObj.WeenieObj.FoeType == null)
                 {
                     //Console.WriteLine($"{PhysicsObj.Name}.ObjectMaint.AddVisibleTarget({obj.Name}): tried to add a non-player / non-combat pet");
                     return false;

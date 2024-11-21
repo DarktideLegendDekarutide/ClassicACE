@@ -35,11 +35,14 @@ namespace ACE.Server.Entity
         public double NextScan { get; set; } = 0;
         public double ScanTime { get; } = 10;
         public double NextStuckBackoff = 0;
+        public double LastMonsterAttack = 0;
         public uint StuckCount = 0;
+        public bool HasInitiatedAttack = false;
         public bool IsProcessingTick { get; set; } = false;
         public Position? LastPosition { get; set; } = null;
         public Position? TemporaryTargetPosition { get; set; } = null;
         public Position? TargetPosition { get; set; } = null;
+        public Position? HostilePosition { get; set; } = null;
         public WorldObject? TargetObject { get; set; } = null;
         public PathfindingState() { }
     }
