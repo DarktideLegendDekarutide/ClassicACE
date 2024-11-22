@@ -20,15 +20,16 @@ namespace ACE.Server.WorldObjects
     {
         private PathfindingState PathfindingState = new PathfindingState();
 
+        private bool IsPathfindingCombat => PathfindingState.Status == PathfindingStatus.Combat;
+        private bool IsPathfindingResetting => PathfindingState.Status == PathfindingStatus.Reset;
+        private bool IsPathfindingNavigating => PathfindingState.Status == PathfindingStatus.Navigating;
+        private bool IsPathfindingIdle => PathfindingState.Status == PathfindingStatus.Idle;
+        private bool IsPathfindingStuck => PathfindingState.StuckCount > 0;
+
         public bool IsPatrolCreature => PathfindingState.Type == PathfindingType.Patrol;
         public bool IsMovingWithPathfinding => PathfindingState.Type != PathfindingType.None;
         public bool IsNavToPosition => PathfindingState.Type == PathfindingType.NavToPosition;
         public bool IsNavToObject => PathfindingState.Type == PathfindingType.NavToObject;
-        public bool IsPathfindingCombat => PathfindingState.Status == PathfindingStatus.Combat;
-        public bool IsPathfindingResetting => PathfindingState.Status == PathfindingStatus.Reset;
-        public bool IsNavigating => PathfindingState.Status == PathfindingStatus.Navigating;
-        public bool IsIdle => PathfindingState.Status == PathfindingStatus.Idle;
-        public bool IsStuck => PathfindingState.StuckCount > 0;
 
         private HashSet<uint> PathfindingAllies = new HashSet<uint>();
 
@@ -126,7 +127,7 @@ namespace ACE.Server.WorldObjects
         {
             PathfindingState.NextTickTime  = currentUnixTime + PathfindingState.MoveTime;
 
-            if (IsIdle)
+            if (IsPathfindingIdle)
                 return;
 
             if (IsNavToPosition && PathfindingState.TargetPosition == null)
@@ -178,6 +179,7 @@ namespace ACE.Server.WorldObjects
                 return;
             }
 
+            // never process when moving and the last move time is less than 5 seconds 
             if (IsMoving && currentUnixTime < PathfindingState.LastMoveTime + 5)
                 return;
 
@@ -217,12 +219,15 @@ namespace ACE.Server.WorldObjects
             if ((currentUnixTime > PathfindingState.NextStuckBackoff) && (PathfindingState.LastPosition != null) &&
                 (lastDistance.HasValue && lastDistance < 0.2))
             {
-                IsMoving = true;
+
                 PathfindingState.StuckCount++;
 
                 log.Info("Stuck in position!");
                 log.Info($"CurrentLocation: {PhysicsObj.Position.ACEPosition().ToLOCString()}");
                 log.Info($"StuckCount: {PathfindingState.StuckCount.ToString()}");
+
+                if (PathfindScan())
+                    return;
 
                 if (PathfindingState.StuckCount > 1)
                 {
@@ -230,25 +235,22 @@ namespace ACE.Server.WorldObjects
                     ResetPath();
                 }
 
-                if (PathfindScan())
-                    return;
-
+                IsMoving = true;
                 var offsetPosition = new ACE.Entity.Position(Location);
                 offsetPosition = offsetPosition.InFrontOf(3);
                 RunToPosition(offsetPosition);
             } else
             // if not stuck
             {
-                PathfindingState.LastMoveTime = currentUnixTime;
-
-                IsMoving = true;
-                PathfindingState.StuckCount = 0;
-
-                log.Info($"Navigating to destination: {destination.ToLOCString()}");
-                log.Info($"Main target destination: {PathfindingState.TargetPosition.ToLOCString()}");
                 if(PathfindScan())
                     return;
 
+                log.Info($"Navigating to destination: {destination.ToLOCString()}");
+                log.Info($"Main target destination: {PathfindingState.TargetPosition.ToLOCString()}");
+
+                PathfindingState.LastMoveTime = currentUnixTime;
+                IsMoving = true;
+                PathfindingState.StuckCount = 0;
                 PathfindingState.LastPosition = PhysicsObj.Position.ACEPosition();
                 RunToPosition(destination);
             }
