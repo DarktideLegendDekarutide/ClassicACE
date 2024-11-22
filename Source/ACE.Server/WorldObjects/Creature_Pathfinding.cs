@@ -350,6 +350,9 @@ namespace ACE.Server.WorldObjects
             {
                 log.Info($"Finished main target position: {PathfindingState.TargetPosition?.ToLOCString()}");
                 log.Info($"Finished main target distance: {PathfindingState?.TargetPosition?.SquaredDistanceTo(Location)}");
+
+                OnFinishPathfinding();
+
                 PathfindingState.TargetPosition = null;
                 PathfindingState.Status = PathfindingStatus.Idle;
 
@@ -364,6 +367,8 @@ namespace ACE.Server.WorldObjects
 
         private void HandleForceFinish()
         {
+            OnFinishPathfinding();
+
             if (PathfindingState.TargetObject != null)
             {
                 PathfindingState.TargetObject.RemovePathfindingFollower(this);
@@ -375,6 +380,11 @@ namespace ACE.Server.WorldObjects
             PathfindingState.TargetPosition = null;
             PathfindingState.Type = PathfindingType.None;
             PathfindingState.Status = PathfindingStatus.Idle;
+        }
+
+        protected virtual void OnFinishPathfinding()
+        {
+            throw new NotImplementedException();
         }
 
         /// <summary>
