@@ -2790,10 +2790,13 @@ namespace ACE.Server.Physics
             {
                 handle_visible_cells();
 
-                // players and combat pets
-                var visibleTargets = ObjMaint.GetVisibleObjects(CurCell, ObjectMaint.VisibleObjectType.AttackTargets);
+                if (WeenieObj.IsMonster)
+                {
+                    // players and combat pets
+                    var visibleTargets = ObjMaint.GetVisibleObjects(CurCell, ObjectMaint.VisibleObjectType.AttackTargets);
 
-                var newTargets = ObjMaint.AddVisibleTargets(visibleTargets);
+                    var newTargets = ObjMaint.AddVisibleTargets(visibleTargets);
+                }
             }
             else if (WeenieObj.IsMonster)
             {

@@ -1130,7 +1130,7 @@ namespace ACE.Server.Physics.Common
         /// <summary>
         /// Clears all of the ObjMaint tables for an object
         /// </summary>
-        private void RemoveAllObjects()
+        public void RemoveAllObjects()
         {
             KnownObjects.Clear();
             VisibleObjects.Clear();

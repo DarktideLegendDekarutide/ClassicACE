@@ -67,12 +67,20 @@ namespace ACE.Server.WorldObjects
         /// <param name="hostileTargetDetectRange"></param>
         public void NavToPosition(Position position, float hostileTargetDetectRange = 20.0f)
         {
-            WakeUp(false);
-            SetPathfindingAttackable();
             PathfindingState.TargetPosition = position;
             PathfindingState.TargetHostileRange = hostileTargetDetectRange; 
             PathfindingState.Type = PathfindingType.NavToPosition;
             PathfindingState.Status = PathfindingStatus.Navigating;
+
+            WakeUp(false);
+            SetPathfindingAttackable();
+            InitializePhysicsObject();
+        }
+
+        private void InitializePhysicsObject()
+        {
+            PhysicsObj.ObjMaint.RemoveAllObjects();
+            PhysicsObj.handle_visible_cells_non_player();
         }
 
         /// <summary>
@@ -82,13 +90,16 @@ namespace ACE.Server.WorldObjects
         /// <param name="hostileTargetDetectRange"></param>
         public void NavToObject(WorldObject wo, float hostileTargetDetectRange = 20.0f)
         {
-            WakeUp(false);
-            SetPathfindingAttackable();
+
             PathfindingState.TargetObject = wo;
             PathfindingState.TargetHostileRange = hostileTargetDetectRange; 
             PathfindingState.Type = PathfindingType.NavToObject;
             PathfindingState.Status = PathfindingStatus.Navigating;
             wo.AddPathfindingFollower(this);
+
+            WakeUp(false);
+            SetPathfindingAttackable();
+            InitializePhysicsObject();
         }
 
         /// <summary>
@@ -100,12 +111,15 @@ namespace ACE.Server.WorldObjects
         public void Patrol(float hostileTargetDetectRange = 20.0f, float? maxDistance = null)
         {
             //log.Info($"Patrolling Triggered");
-            WakeUp(false);
-            SetPathfindingAttackable();
+
             PathfindingState.TargetPosition = PathfinderManager.GetRandomPointOnMesh(Location, maxDistance);
             PathfindingState.TargetHostileRange = hostileTargetDetectRange; 
             PathfindingState.Type = PathfindingType.Patrol;
             PathfindingState.Status = PathfindingStatus.Navigating;
+
+            WakeUp(false);
+            SetPathfindingAttackable();
+            InitializePhysicsObject();
             //log.Info($"Starting main position: {PathfindingState.TargetPosition.ToLOCString()}");
             //log.Info($"Starting main target distance: {PathfindingState.TargetPosition.SquaredDistanceTo(Location)}");
         }
@@ -165,7 +179,7 @@ namespace ACE.Server.WorldObjects
 
             var distance = PhysicsObj.Position.ACEPosition().SquaredDistanceTo(targetPosition);
 
-            if (distance < 2)
+            if (distance < 2 && !IsNavToObject)
             {
                 //log.Info("Reached destination, finishing PathFind");
                 FinishPathfinding();
@@ -246,7 +260,7 @@ namespace ACE.Server.WorldObjects
                     return;
 
                 log.Info($"Navigating to destination: {destination.ToLOCString()}");
-                log.Info($"Main target destination: {PathfindingState.TargetPosition.ToLOCString()}");
+                log.Info($"Main target destination: {PathfindingState.TargetPosition?.ToLOCString()}");
 
                 PathfindingState.LastMoveTime = currentUnixTime;
                 IsMoving = true;
@@ -456,7 +470,11 @@ namespace ACE.Server.WorldObjects
                 return true;
             }
 
-            if (PathfindingState.HostilePosition == null && closestCreature != null && closestCreatureDistance.HasValue && closestCreatureDistance.Value < PathfindingState.TargetHostileRange)
+            if (!IsNavToObject &&
+                PathfindingState.HostilePosition == null &&
+                closestCreature != null &&
+                closestCreatureDistance.HasValue &&
+                closestCreatureDistance.Value < PathfindingState.TargetHostileRange)
             {
                 PathfindingState.HostilePosition = closestCreature.PhysicsObj.Position.ACEPosition();
                 log.Info($"Adding Hostile Position: {PathfindingState.HostilePosition?.ToLOCString()}");
