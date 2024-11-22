@@ -288,7 +288,7 @@ namespace ACE.Server.WorldObjects
                 distance = newPosition != null ? Location.SquaredDistanceTo(newPosition) : distance;
             }
 
-            log.Info($"Reset path distance: {Location.SquaredDistanceTo(PathfindingState.TemporaryTargetPosition)}");
+            log.Info($"Reset path distance: {distance}");
             PathfindingState.LastPosition = null;
             PathfindingState.Status = PathfindingStatus.Reset;
         }
