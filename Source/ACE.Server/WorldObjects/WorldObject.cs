@@ -901,9 +901,6 @@ namespace ACE.Server.WorldObjects
                     creature.FinishPathfinding();
             }
 
-            if (PathfindingFollowers.Count > 0)
-                EndPathfindingFollowers();
-
             if (this is Pet pet && pet.P_PetOwner?.CurrentActivePet == this)
                 pet.P_PetOwner.CurrentActivePet = null;
 
@@ -1347,26 +1344,6 @@ namespace ACE.Server.WorldObjects
                 case 0x06020017:
                     return true;
             }
-        }
-        private List<Creature> PathfindingFollowers = new List<Creature>();
-
-        public void AddPathfindingFollower (Creature follower)
-        {
-            PathfindingFollowers.Add(follower);
-        }
-        public void RemovePathfindingFollower (Creature follower)
-        {
-            PathfindingFollowers.Remove(follower);
-        }
-        public void EndPathfindingFollowers()
-        {
-            foreach (var knownPathfinder in PathfindingFollowers.ToList())
-            {
-                if (knownPathfinder != null)
-                    knownPathfinder.FinishPathfinding(true);
-            }
-
-            PathfindingFollowers.Clear();
         }
     }
 }

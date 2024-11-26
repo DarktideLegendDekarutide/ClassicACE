@@ -655,7 +655,6 @@ namespace ACE.Server.WorldObjects
             IsLoggingOut = true;
 
             EndSneaking();
-            EndPathfindingFollowers();
 
             if (Fellowship != null)
                 FellowshipQuit(false);
